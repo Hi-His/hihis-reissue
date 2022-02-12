@@ -45,7 +45,7 @@
       >
         <a-input
           v-ant-ref="(c) => (searchInput = c)"
-          :placeholder="`Search ${column.dataIndex}`"
+          :placeholder="`搜索 ${column.title}`"
           :value="selectedKeys[0]"
           style="width: 188px; margin-bottom: 8px; display: block"
           @change="
@@ -62,7 +62,7 @@
           style="width: 90px; margin-right: 8px"
           @click="() => handleSearch(selectedKeys, confirm, column.dataIndex)"
         >
-          Search
+          搜索
         </a-button>
         <a-button
           size="small"
@@ -71,7 +71,7 @@
             () => handleReset(clearFilters, selectedKeys, column.dataIndex)
           "
         >
-          Reset
+          重置
         </a-button>
       </div>
       <a-icon
@@ -80,27 +80,38 @@
         type="search"
         :style="{ color: filtered ? '#108ee9' : undefined }"
       />
-      <template slot="customRender" slot-scope="text, record, index, column">
-        <span v-if="searchText && searchedColumn === column.dataIndex">
-          <template
-            v-for="(fragment, i) in text
-              .toString()
-              .split(new RegExp(`(?<=${searchText})|(?=${searchText})`, 'i'))"
-          >
-            <mark
-              v-if="fragment.toLowerCase() === searchText.toLowerCase()"
-              :key="i"
-              class="highlight"
-              >{{ fragment }}</mark
-            >
-            <template v-else>{{ fragment }}</template>
-          </template>
-        </span>
-        <template v-else>
-          {{ text }}
-        </template>
-      </template>
 
+      <div
+        slot="filterTime"
+          slot-scope="{
+         confirm 
+        }"
+        style="padding: 8px"
+      >
+        <div style="padding-bottom: 10px">
+           <a-range-picker  
+            :placeholder="['开始时间', '结束时间']"
+        @change="onChange"  
+       @ok="onOk"
+            show-time>
+     
+    </a-range-picker>
+        </div>
+
+     <a-button
+          type="primary"
+          icon="search"
+          size="small"
+          style="width: 90px; margin-right: 8px"
+          @click="() => handleSearch([date], confirm, `timeSearch`)"
+        >
+          搜索
+        </a-button>
+        
+        
+      </div>
+
+     
       <template slot="cookie" slot-scope="text, record">
         <EditableCell
           :text="text"
@@ -183,6 +194,11 @@ export default class App extends Vue {
       title: '插入时间',
       key: 'insertTime',
       dataIndex: 'insertTime',
+      scopedSlots: {
+        filterDropdown: 'filterTime',
+        filterIcon: 'filterIcon',
+        customRender: 'customRender',
+      },
     },
     {
       title: '方法名称',
@@ -230,6 +246,14 @@ export default class App extends Vue {
       scopedSlots: { customRender: 'operation' },
     },
   ]
+
+  date:any = []
+  onChange (value, dateString) {
+     this.date = value
+    }
+   onOk(value)   {
+    this.date = value
+  }
 
   changeLogs() {
     this.searchReissue = !this.searchReissue
@@ -301,6 +325,7 @@ export default class App extends Vue {
       }
     })
     this.pagination.total = res.data.pages
+    this.pagination.current = 1
     this.loading = false
     this.data = res.data.records
   }

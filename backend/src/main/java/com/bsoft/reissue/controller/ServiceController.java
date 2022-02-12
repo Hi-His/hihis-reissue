@@ -10,6 +10,7 @@ import com.bsoft.reissue.service.AnchorPointLogService;
 import com.bsoft.reissue.service.AnchorPointReissueService;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,6 +58,7 @@ public class ServiceController {
             String params = reissue.getParams();
             String method = reissue.getMethod();
             String result = reissue.getResult();
+            List<Date> timeSearch = reissue.getTimeSearch();
             if(cd != null){
                 wrapper.eq("cd",cd);
             }
@@ -69,6 +73,11 @@ public class ServiceController {
             }
             if(StringUtils.hasText(result)){
                 wrapper.like("result",result);
+            }
+            if(!CollectionUtils.isEmpty(timeSearch)){
+                Date start = timeSearch.get(0);
+                Date end = timeSearch.get(1);
+                wrapper.between("insert_time",start,end);
             }
         }
 

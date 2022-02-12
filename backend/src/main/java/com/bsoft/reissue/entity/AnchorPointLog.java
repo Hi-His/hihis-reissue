@@ -9,6 +9,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @TableName("hi_anchorpoint_log")
@@ -41,6 +42,9 @@ public class AnchorPointLog implements Serializable {
     @TableField("insert_time")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone="Asia/Shanghai")
     private Date insertTime;
+
+    @TableField(exist = false)
+    private List<Date> timeSearch;
 
     @TableField(exist = false)
     private String tk;
