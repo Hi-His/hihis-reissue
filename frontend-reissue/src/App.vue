@@ -81,24 +81,18 @@
         :style="{ color: filtered ? '#108ee9' : undefined }"
       />
 
-      <div
-        slot="filterTime"
-          slot-scope="{
-         confirm 
-        }"
-        style="padding: 8px"
-      >
+      <div slot="filterTime" slot-scope="{ confirm }" style="padding: 8px">
         <div style="padding-bottom: 10px">
-           <a-range-picker  
+          <a-range-picker
             :placeholder="['开始时间', '结束时间']"
-        @change="onChange"  
-       @ok="onOk"
-            show-time>
-     
-    </a-range-picker>
+            @change="onChange"
+            @ok="onOk"
+            show-time
+          >
+          </a-range-picker>
         </div>
 
-     <a-button
+        <a-button
           type="primary"
           icon="search"
           size="small"
@@ -107,15 +101,26 @@
         >
           搜索
         </a-button>
-        
-        
       </div>
 
-     
-      <template slot="cookie" slot-scope="text, record">
+      <template slot="tkEditor" slot-scope="text, record">
         <EditableCell
           :text="text"
-          @change="(value) => onCellChange(record, value)"
+          @change="(value) => onCellChange(record, value, 'tk')"
+        />
+      </template>
+
+      <template slot="methodEditor" slot-scope="text, record">
+        <EditableCell
+          :text="text"
+          @change="(value) => onCellChange(record, value, 'method')"
+        />
+      </template>
+
+      <template slot="beanEditor" slot-scope="text, record">
+        <EditableCell
+          :text="text"
+          @change="(value) => onCellChange(record, value, 'beanName')"
         />
       </template>
 
@@ -125,6 +130,10 @@
         </a-button>
       </template>
     </a-table>
+
+    <a-modal v-model="visible" title="返回结果" @ok="handleOk" width="1000px">
+      <div>{{ res }}</div>
+    </a-modal>
   </div>
 </template>
 
@@ -150,15 +159,16 @@ export default class App extends Vue {
   searchInput = null
   searchedColumn = ''
 
+  res = ''
+  visible = false
+
+  handleOk() {
+    this.visible = false
+  }
   loading = false
 
   btLoading = false
   columns = [
-    {
-      dataIndex: 'idAnchorpointlog',
-      title: '锚点日志id',
-      rowKey: 'idAnchorpointlog',
-    },
     {
       title: 'bean名称',
       dataIndex: 'beanName',
@@ -166,7 +176,7 @@ export default class App extends Vue {
       scopedSlots: {
         filterDropdown: 'filterDropdown',
         filterIcon: 'filterIcon',
-        customRender: 'customRender',
+        customRender: 'beanEditor',
       },
     },
     {
@@ -207,7 +217,7 @@ export default class App extends Vue {
       scopedSlots: {
         filterDropdown: 'filterDropdown',
         filterIcon: 'filterIcon',
-        customRender: 'customRender',
+        customRender: 'methodEditor',
       },
     },
     {
@@ -215,7 +225,7 @@ export default class App extends Vue {
       key: 'tk',
       dataIndex: 'tk',
 
-      scopedSlots: { customRender: 'cookie' },
+      scopedSlots: { customRender: 'tkEditor' },
     },
     {
       title: '三方入参',
@@ -247,11 +257,11 @@ export default class App extends Vue {
     },
   ]
 
-  date:any = []
-  onChange (value, dateString) {
-     this.date = value
-    }
-   onOk(value)   {
+  date: any = []
+  onChange(value, dateString) {
+    this.date = value
+  }
+  onOk(value) {
     this.date = value
   }
 
@@ -268,8 +278,8 @@ export default class App extends Vue {
     this.fetch(this.pagination)
   }
 
-  onCellChange(record, value) {
-    record.tk = value
+  onCellChange(record, value, key) {
+    record[key] = value
   }
 
   onClick(value) {
@@ -286,11 +296,9 @@ export default class App extends Vue {
   }
 
   async onReissue(column) {
+    const key = Math.random() * 1000
     try {
-      this.$message.loading({
-        content: '执行重放中...',
-        key: column.idAnchorpointreissue,
-      })
+      this.$message.loading({ content: 'Loading...', key })
 
       var res = await this.axios.post('/logs/sendPoint/', column)
     } catch (error) {
@@ -299,16 +307,16 @@ export default class App extends Vue {
         key: column.idAnchorpointreissue,
         duration: 10,
       })
+    } finally {
+      this.$message.success({ content: '重放执行成功...', key, duration: 2 })
     }
 
     if (!res || !res.data.success) {
       alert('重放失败：' + column.beanName + '.' + column.method)
     }
-    this.$message.success({
-      content: '重放执行完成,返回结果：' + res.data.result,
-      key: column.idAnchorpointreissue,
-      duration: 3,
-    })
+
+    this.visible = true
+    this.res = res.data.result
   }
 
   async handleSearch(selectedKeys, confirm, dataIndex) {
